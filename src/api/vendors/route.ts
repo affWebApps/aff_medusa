@@ -35,13 +35,22 @@ export const POST = async (
     }
 
     const vendorData = req.validatedBody
+    const authIdentityId = req.auth_context?.auth_identity_id
+    console.log("auth is", req.auth_context)
+
+    if (!authIdentityId) {
+        throw new MedusaError(
+            MedusaError.Types.UNAUTHORIZED,
+            "Authentication required to create a vendor."
+        )
+    }
 
     // create vendor admin
     const { result } = await createVendorWorkflow(req.scope)
         .run({
             input: {
                 ...vendorData,
-                authIdentityId: req.auth_context.auth_identity_id,
+                authIdentityId,
             } as CreateVendorWorkflowInput,
         })
 

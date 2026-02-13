@@ -9,31 +9,28 @@ import {
   ContainerRegistrationKeys
 } from "@medusajs/framework/utils"
 import createVendorProductWorkflow from "../../../workflows/marketplace/create-vendor-product";
+import { logger } from "@medusajs/framework";
+import VendorAdmin from "../../../modules/marketplace/models/vendor-admin";
 
 export const GET = async (
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
 ) => {
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  console.log(req.query.vendor_id)
 
-  const { data: [vendor] } = await query.graph({
-    entity: "vendor",
+  const { data: [vendorAdmin] } = await query.graph({
+    entity: "vendor_admin",
     fields: ["vendor.products.*"],
     filters: {
       id: [
         // ID of the authenticated vendor admin
-        req.query.vendor_id as any
+        req.auth_context.actor_id
       ],
     },
   })
-  if (!vendor) {
-    res.status(404).json({
-      message: "Vendor not found",
-    })
-  }
+
   res.json({
-    products: vendor.products
+    products: vendorAdmin.vendor.products
   })
 }
 

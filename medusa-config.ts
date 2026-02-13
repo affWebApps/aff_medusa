@@ -1,4 +1,5 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig, Modules, ContainerRegistrationKeys } from '@medusajs/framework/utils'
+import { identifierToKeywordKind } from 'typescript'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
@@ -21,5 +22,27 @@ module.exports = defineConfig({
        * options: { defaultVendorId: "" }
        */
     },
+    {
+      resolve: "@medusajs/medusa/auth",
+      dependencies: [Modules.CACHE, ContainerRegistrationKeys.LOGGER],
+      // ...
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/auth-emailpass",
+            id: "emailpass",
+            options: {
+              // optional hash config
+            },
+          },
+          {
+            resolve: "./src/modules/aff-auth",
+            id: "my-auth",
+          },
+        ],
+      },
+    },
+
+
   ],
 })
