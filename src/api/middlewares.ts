@@ -6,10 +6,15 @@ import {
 } from "@medusajs/framework/http"
 import { createFindParams } from "@medusajs/medusa/api/utils/validators"
 import { PostVendorCreateSchema } from "./vendors/route"
+import { z } from "@medusajs/framework/zod"
+import { AdminCreateProduct } from "@medusajs/medusa/api/admin/products/validators"
+
 
 // other imports...
 
-export const GetVendorsSchema = createFindParams()
+export const GetVendorsSchema = z.object({
+    vendor_id: z.string().optional(),
+}).merge(createFindParams())
 
 export default defineMiddlewares({
     routes: [
@@ -46,6 +51,13 @@ export default defineMiddlewares({
                     }
                 ),
             ],
+        },
+        {
+            matcher: "/vendors/products",
+            method: ["POST"],
+            middlewares: [
+                validateAndTransformBody(AdminCreateProduct),
+            ]
         },
 
     ],
