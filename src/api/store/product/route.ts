@@ -19,11 +19,10 @@ export const GET = async (
     })
 
     const vendorId = product.vendor?.id
-    const vendorEmail = product.vendor?.handle
 
     res.json({
         vendorId,
-        vendorEmail,
+        vendorHandle: product.vendor?.handle,
         vendorLogo: product.vendor?.logo
     })
 }
