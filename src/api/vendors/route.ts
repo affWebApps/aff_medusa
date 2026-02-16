@@ -36,7 +36,6 @@ export const POST = async (
 
     const vendorData = req.validatedBody
     const authIdentityId = req.auth_context?.auth_identity_id
-    console.log("auth is", req.auth_context)
 
     if (!authIdentityId) {
         throw new MedusaError(

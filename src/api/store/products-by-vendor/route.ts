@@ -26,12 +26,12 @@ export const GET = async (req, res) => {
       vendor_id: vendorId,
     },
     pagination: {
-      take: 10,  // how many linked rows (and thus products) to return
-      skip: 0,  // how many to skip
+      take: req.queryConfig.pagination.take,  // how many linked rows (and thus products) to return
+      skip: req.queryConfig.pagination.skip,  // how many to skip
     },
   })
   const products = productLinks.map((productLink) => { return productLink.product })
-  console.log(products)
+  const pagination = { take, skip, count }
 
   const { data: productsWithPrices } = await query.graph({
     entity: "product",
@@ -45,53 +45,10 @@ export const GET = async (req, res) => {
     },
   })
 
-
-  res.json(
-    productsWithPrices,
-  )
+  res.json({
+    products: productsWithPrices,
+    take,
+    skip,
+    count
+  })
 }
-
-// export const GET = async (
-//   req: MedusaRequest,
-//   res: MedusaResponse
-// ) => {
-//   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-//   const vendorId = req.query.vendor_id as string
-//   console.log(req.queryConfig)
-
-//   const { data: [vendor] } = await query.graph({
-//     entity: "vendor",
-//     fields: ["products.*"],
-//     filters: {
-//       id: [
-//         // ID of the authenticated vendor admin
-//         vendorId,
-//       ],
-//     },
-//     pagination: {
-//       take: 1, skip: 0, order: {
-//         name: "DESC", // or "ASC"
-//       }
-//     },
-//   })
-//   console.log(vendor.products?.length)
-
-//   const publishedProducts = vendor.products?.filter((product) => { return product?.status === 'published' })
-
-//   const { data: productsWithPrices } = await query.graph({
-//     entity: "product",
-//     fields: [
-//       "*",
-//       "variants.*",
-//       "variants.prices.*",
-//     ],
-//     filters: {
-//       id: publishedProducts?.map((p) => p?.id) as any,
-//     },
-//   })
-
-
-//   res.json(
-//     productsWithPrices,
-//   )
-// }

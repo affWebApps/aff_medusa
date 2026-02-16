@@ -40,7 +40,6 @@ export default class MyAuthProviderService extends AbstractAuthModuleProvider {
     ): Promise<AuthenticationResponse> {
         let isAuthenticated = false
         let beUser: Record<string, unknown> | undefined
-        console.log('authenticating.....')
         try {
             const beUrl = process.env.BE_URL
             if (!beUrl) {
