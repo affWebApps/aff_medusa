@@ -38,6 +38,7 @@ export const POST = async (
   req: AuthenticatedMedusaRequest<HttpTypes.AdminCreateProduct>,
   res: MedusaResponse
 ) => {
+  console.log(req.auth_context.actor_id, "is the vendor_admin_id")
   const { result } = await createVendorProductWorkflow(req.scope)
     .run({
       input: {

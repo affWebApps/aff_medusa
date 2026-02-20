@@ -7,6 +7,8 @@ import { z } from "@medusajs/framework/zod"
 import createVendorWorkflow, {
     CreateVendorWorkflowInput,
 } from "../../workflows/marketplace/create-vendor"
+import { createCustomerAccountWorkflow } from "@medusajs/medusa/core-flows"
+
 
 export const PostVendorCreateSchema = z.object({
     name: z.string(),
@@ -25,23 +27,44 @@ export const POST = async (
     req: AuthenticatedMedusaRequest<RequestBody>,
     res: MedusaResponse
 ) => {
-    // If `actor_id` is present, the request carries 
-    // authentication for an existing vendor admin
-    if (req.auth_context?.actor_id) {
+    // If a vendor is already linked to this auth context, prevent duplicate creation
+    console.log(req.auth_context?.user_metadata?.vendor_id)
+    if (req.auth_context?.user_metadata?.vendor_id) {
         throw new MedusaError(
             MedusaError.Types.INVALID_DATA,
-            "Request already authenticated as a vendor."
+            "Vendor already exists for this account."
         )
     }
 
     const vendorData = req.validatedBody
     const authIdentityId = req.auth_context?.auth_identity_id
+    console.log(authIdentityId, "is your auth identity")
 
     if (!authIdentityId) {
         throw new MedusaError(
             MedusaError.Types.UNAUTHORIZED,
             "Authentication required to create a vendor."
         )
+    }
+
+    // Ensure a customer exists for this admin email (idempotent by email)
+    let customer
+    try {
+        const { result: customerResult } = await createCustomerAccountWorkflow(req.scope).run({
+            input: {
+                authIdentityId,      // your existing auth_identity ID, e.g. "au_1234"
+                customerData: {      // CreateCustomerDTO
+                    email: vendorData.admin.email,
+                    first_name: vendorData.admin.first_name,
+                    last_name: vendorData.admin.last_name,
+                    // phone, company_name, metadata, etc. if needed
+                },
+            },
+        })
+        customer = customerResult
+    }
+    catch (e) {
+        // proceed even if customer creation fails; vendor creation may still succeed
     }
 
     // create vendor admin
@@ -55,5 +78,6 @@ export const POST = async (
 
     res.json({
         vendor: result.vendor,
+        customer,
     })
 }

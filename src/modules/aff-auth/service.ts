@@ -1,6 +1,10 @@
 import { AbstractAuthModuleProvider } from "@medusajs/framework/utils"
-import { AuthenticationInput, AuthenticationResponse, AuthIdentityProviderService, Logger } from "@medusajs/framework/types"
-import { Client, ClientConfig } from "@medusajs/framework/pg"
+import {
+    AuthenticationInput,
+    AuthenticationResponse,
+    AuthIdentityProviderService,
+    Logger,
+} from "@medusajs/framework/types"
 
 type InjectedDependencies = {
     logger: Logger
@@ -15,84 +19,93 @@ export default class MyAuthProviderService extends AbstractAuthModuleProvider {
     static identifier = "my-auth"
     protected logger_: Logger
     protected options_: Options
-    // assuming you're initializing a client
-    protected client
-
-    // constructor(
-    //     { logger }: InjectedDependencies,
-    //     options: Options
-    // ) {
-    //     super(...arguments)
-
-    //     this.logger_ = logger
-    //     this.options_ = options
-
-    //     // assuming you're initializing a client
-    //     this.client = new Client(options as ClientConfig)
-    // }
-
-    authenticate(data: AuthenticationInput, authIdentityProviderService: AuthIdentityProviderService): Promise<AuthenticationResponse> {
-        throw new Error("Method not implemented.")
+    constructor({ logger }: InjectedDependencies, options: Options) {
+        // @ts-ignore upstream base signature
+        super(...arguments)
+        this.logger_ = logger
+        this.options_ = options
     }
+
+    async authenticate(
+        data: AuthenticationInput,
+        authIdentityProviderService: AuthIdentityProviderService
+    ): Promise<AuthenticationResponse> {
+        return this.handleAuth(data, authIdentityProviderService)
+    }
+
     async validateCallback(
         data: AuthenticationInput,
         authIdentityProviderService: AuthIdentityProviderService
     ): Promise<AuthenticationResponse> {
-        let isAuthenticated = false
-        let beUser: Record<string, unknown> | undefined
-        try {
-            const beUrl = process.env.BE_URL
-            if (!beUrl) {
-                throw new Error("BE_URL env var is missing")
-            }
+        return this.handleAuth(data, authIdentityProviderService)
+    }
 
-            const response = await fetch(`${beUrl}/users/me`, {
-                headers: {
-                    Authorization: `Bearer ${data?.body?.token ?? ""}`,
-                    "x-api-key": this.options_?.apiKey ?? "",
-                    Accept: "application/json",
-                },
-            })
-
-            if (response.ok) {
-                beUser = await response.json()
-                isAuthenticated = true
-            } else {
-                this.logger_?.warn?.(
-                    `Custom BE auth failed with status ${response.status}`
-                )
-            }
-        } catch (error) {
-            this.logger_?.error?.("Error calling custom BE", error)
+    /**
+     * Shared auth handler for both authenticate and validateCallback
+     */
+    private async handleAuth(
+        data: AuthenticationInput,
+        authIdentityProviderService: AuthIdentityProviderService
+    ): Promise<AuthenticationResponse> {
+        const beUser = await this.fetchBeUser(data)
+        if (!beUser) {
+            return { success: false, error: "Authentication failed" }
         }
 
-        if (!isAuthenticated) {
-            return {
-                success: false,
-                error: "Something went wrong",
-            }
+        const externalId = (beUser as any).id || (beUser as any).user_id || (beUser as any).email
+        if (!externalId) {
+            return { success: false, error: "External user id missing" }
         }
 
-        let authIdentity
+        const entityId = String(externalId)
+
+        const authIdentity = await this.upsertAuthIdentity(
+            entityId,
+            beUser,
+            authIdentityProviderService
+        )
+
+        return { success: true, authIdentity }
+    }
+
+    private async fetchBeUser(data: AuthenticationInput): Promise<Record<string, unknown> | null> {
+        const beUrl = process.env.BACKEND_URL
+        if (!beUrl) {
+            this.logger_?.error?.("BACKEND_URL env var is missing")
+            return null
+        }
+        console.log("auth token is", data.headers?.['x-aff-token'])
+        const response = await fetch(`${beUrl}/users/me`, {
+            headers: {
+                Authorization: `Bearer ${data.headers?.['x-aff-token'] ?? ""}`,
+                "x-api-key": this.options_?.apiKey ?? "",
+                Accept: "application/json",
+            },
+        })
+
+        if (!response.ok) {
+            this.logger_?.warn?.(`Custom BE auth failed with status ${response.status}`)
+            return null
+        }
+
+        return response.json()
+    }
+
+    private async upsertAuthIdentity(
+        entityId: string,
+        beUser: Record<string, unknown>,
+        authIdentityProviderService: AuthIdentityProviderService
+    ) {
         try {
-            authIdentity = await authIdentityProviderService.retrieve({
-                entity_id: data?.body?.email as string, // or your external user ID
-            })
+            return await authIdentityProviderService.retrieve({ entity_id: entityId })
         } catch (e) {
-            authIdentity = await authIdentityProviderService.create({
-                entity_id: data?.body?.email as string,
+            return await authIdentityProviderService.create({
+                entity_id: entityId,
                 provider_metadata: {
-                    // store provider‑specific data (tokens, ids, etc.)
+                    external_user: beUser,
                 },
-                user_metadata: {
-                    // store user profile data from your custom BE
-                },
+                user_metadata: beUser,
             })
-        }
-
-        return {
-            success: true,
-            authIdentity,
         }
     }
 }
