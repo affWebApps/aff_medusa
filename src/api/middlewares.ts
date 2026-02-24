@@ -66,6 +66,15 @@ export default defineMiddlewares({
                 validateAndTransformBody(AdminCreateProduct),
             ]
         },
+        {
+            matcher: "/store/cart",
+            method: ["GET", "POST"],
+            middlewares: [
+                affTokenAuth,
+                // validateAndTransformBody(AdminCreateProduct),
+                // (req, res, next: MedusaNextFunction) => { console.log("middle run"); next() }
+            ]
+        },
 
     ],
 })
@@ -78,8 +87,6 @@ async function affTokenAuth(
 ) {
     // Cast to any to set auth_context
     const reqAny = req as any
-
-    // logger.log("auth is", reqAny.auth_context)
 
     // If already authenticated and already has customer/vendor, skip. Otherwise proceed to hydrate.
     if (
