@@ -28,5 +28,5 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
         })
         cart_id = result.id
     }
-    res.json({ cart_id })
+    return res.json({ cart_id })
 }

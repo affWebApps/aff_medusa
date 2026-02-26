@@ -3,9 +3,11 @@ import { identifierToKeywordKind } from 'typescript'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY || ''
+
 module.exports = defineConfig({
   admin: {
-    disable: true,
+    disable: process.env.NODE_ENV === 'production',
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -41,6 +43,20 @@ module.exports = defineConfig({
           {
             resolve: "./src/modules/aff-auth",
             id: "my-auth",
+          },
+        ],
+      },
+    },
+    {
+      resolve: "@medusajs/medusa/payment",
+      options: {
+        providers: [
+          // other payment providers like stripe, paypal etc
+          {
+            resolve: "medusa-payment-paystack",
+            options: {
+              secret_key: paystackSecretKey,
+            } satisfies import("medusa-payment-paystack").PluginOptions,
           },
         ],
       },
