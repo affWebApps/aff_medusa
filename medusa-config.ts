@@ -4,6 +4,7 @@ import { identifierToKeywordKind } from 'typescript'
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY || ''
+const paystackTestSecretKey = process.env.PAYSTACK_TEST_SECRET_KEY || ''
 
 module.exports = defineConfig({
   admin: {
@@ -54,8 +55,18 @@ module.exports = defineConfig({
           // other payment providers like stripe, paypal etc
           {
             resolve: "medusa-payment-paystack",
+            id: "paystack-live",
             options: {
               secret_key: paystackSecretKey,
+              debug: false,
+            } satisfies import("medusa-payment-paystack").PluginOptions,
+          },
+          {
+            resolve: "medusa-payment-paystack",
+            id: "paystack-test",
+            options: {
+              secret_key: paystackTestSecretKey,
+              debug: true,
             } satisfies import("medusa-payment-paystack").PluginOptions,
           },
         ],
