@@ -66,7 +66,7 @@ module.exports = defineConfig({
             id: "paystack-test",
             options: {
               secret_key: paystackTestSecretKey,
-              debug: true,
+              debug: false,
             } satisfies import("medusa-payment-paystack").PluginOptions,
           },
         ],
