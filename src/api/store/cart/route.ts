@@ -19,8 +19,9 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
 
     if (carts.length && carts.length > 0) {
         const activeCart = carts.filter((cart) => cart.completed_at === null)[0]
-        cart_id = activeCart.id
-    } else {
+        cart_id = activeCart?.id
+    }
+    if (!cart_id) {
         const { result } = await createCartWorkflow(req.scope).run({
             input: {
                 customer_id: customerId as string,
