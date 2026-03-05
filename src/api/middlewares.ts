@@ -71,8 +71,13 @@ export default defineMiddlewares({
             method: ["GET", "POST"],
             middlewares: [
                 affTokenAuth,
-                // validateAndTransformBody(AdminCreateProduct),
-                // (req, res, next: MedusaNextFunction) => { console.log("middle run"); next() }
+            ]
+        },
+        {
+            matcher: "/store/auth-context",
+            method: ["GET"],
+            middlewares: [
+                affTokenAuth,
             ]
         },
 
@@ -87,6 +92,7 @@ async function affTokenAuth(
 ) {
     // Cast to any to set auth_context
     const reqAny = req as any
+    console.log("Inside middleware")
 
     // If already authenticated and already has customer/vendor, skip. Otherwise proceed to hydrate.
     if (
@@ -130,7 +136,7 @@ async function affTokenAuth(
             const query = req.scope.resolve("query")
             const { data: providerIdentities } = await query.graph({
                 entity: "provider_identity",
-                fields: ["auth_identity_id", "provider", "entity_id", "auth_identity.provider_metadata"],
+                fields: ["auth_identity_id", "provider", "entity_id", "auth_identity.app_metadata"],
                 filters: {
                     entity_id: [user.id ?? actorId],
                     provider: ["my-auth"],
@@ -140,7 +146,7 @@ async function affTokenAuth(
             const match = providerIdentities?.[0]
             if (match?.auth_identity_id) {
                 authIdentityId = match.auth_identity_id
-                existingProviderMetadata = match.provider_metadata as any
+                existingProviderMetadata = match.auth_identity.app_metadata as any
             }
         } catch (e) {
             // ignore lookup errors
