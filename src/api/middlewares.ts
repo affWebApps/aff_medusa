@@ -8,6 +8,7 @@ import { createFindParams } from "@medusajs/medusa/api/utils/validators"
 import { PostVendorCreateSchema } from "./vendors/route"
 import { z } from "@medusajs/framework/zod"
 import { AdminCreateProduct } from "@medusajs/medusa/api/admin/products/validators"
+import { AdminCreateProductWithReqQty } from "./vendors/products/validators"
 import type { MedusaNextFunction, MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import createVendorWorkflow from "../workflows/marketplace/create-vendor"
 import { logger } from "@medusajs/framework/logger"
@@ -63,7 +64,7 @@ export default defineMiddlewares({
             method: ["POST"],
             middlewares: [
                 affTokenAuth,
-                validateAndTransformBody(AdminCreateProduct),
+                validateAndTransformBody(AdminCreateProductWithReqQty),
             ]
         },
         {
@@ -92,7 +93,6 @@ async function affTokenAuth(
 ) {
     // Cast to any to set auth_context
     const reqAny = req as any
-    console.log("Inside middleware")
 
     // If already authenticated and already has customer/vendor, skip. Otherwise proceed to hydrate.
     if (
