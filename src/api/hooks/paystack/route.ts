@@ -9,7 +9,7 @@ import { completeCartWorkflow } from "@medusajs/medusa/core-flows"
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER)
   const body = (req.body ?? {}) as any
-  const secret = process.env.NODE_ENV !== "production" ? process.env.PAYSTACK_TEST_SECRET_KEY : process.env.PAYSTACK_SECRET_KEY
+  const secret = process.env.CUSTOM_NODE_ENV !== "production" ? process.env.PAYSTACK_TEST_SECRET_KEY : process.env.PAYSTACK_SECRET_KEY
   if (!secret) {
     return res.status(500).json({ message: "PAYSTACK_SECRET_KEY not configured" })
   }
