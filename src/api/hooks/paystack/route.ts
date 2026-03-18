@@ -6,10 +6,13 @@ import { completeCartWorkflow } from "@medusajs/medusa/core-flows"
 
 // Paystack webhook: set the endpoint URL in your Paystack dashboard to /hooks/paystack
 // Expects Paystack signature in x-paystack-signature header.
+
+const isNotProduction = (process.env.CUSTOM_NODE_ENV !== "production") || (process.env.NODE_ENV !== "production");
+
 export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   const logger = req.scope.resolve(ContainerRegistrationKeys.LOGGER)
   const body = (req.body ?? {}) as any
-  const secret = process.env.CUSTOM_NODE_ENV !== "production" ? process.env.PAYSTACK_TEST_SECRET_KEY : process.env.PAYSTACK_SECRET_KEY
+  const secret = isNotProduction ? process.env.PAYSTACK_TEST_SECRET_KEY : process.env.PAYSTACK_SECRET_KEY
   if (!secret) {
     return res.status(500).json({ message: "PAYSTACK_SECRET_KEY not configured" })
   }
