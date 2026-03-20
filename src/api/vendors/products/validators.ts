@@ -21,6 +21,14 @@ export const AdminCreateProductWithReqQty = z.preprocess((val) => {
     })
   }
   return obj
-}, BaseAdminCreateProduct)
+}, BaseAdminCreateProduct).superRefine((val, ctx) => {
+  if (!val?.shipping_profile_id) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["shipping_profile_id"],
+      message: "shipping_profile_id is required",
+    })
+  }
+})
 
 export type AdminCreateProductWithReqQtyType = z.infer<typeof AdminCreateProductWithReqQty>
