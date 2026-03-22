@@ -7,7 +7,7 @@ import {
 import { createFindParams } from "@medusajs/medusa/api/utils/validators"
 import { PostVendorCreateSchema } from "./vendors/route"
 import { z } from "@medusajs/framework/zod"
-import { AdminCreateProduct } from "@medusajs/medusa/api/admin/products/validators"
+import { AdminUpdateProduct } from "@medusajs/medusa/api/admin/products/validators"
 import { AdminCreateProductWithReqQty } from "./vendors/products/validators"
 import type { MedusaNextFunction, MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import createVendorWorkflow from "../workflows/marketplace/create-vendor"
@@ -65,6 +65,14 @@ export default defineMiddlewares({
             middlewares: [
                 affTokenAuth,
                 validateAndTransformBody(AdminCreateProductWithReqQty),
+            ]
+        },
+        {
+            matcher: "/vendors/products/:id",
+            method: ["POST"],
+            middlewares: [
+                affTokenAuth,
+                validateAndTransformBody(AdminUpdateProduct),
             ]
         },
         {
