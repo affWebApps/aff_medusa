@@ -20,9 +20,7 @@ export const GetVendorsSchema = z.object({
     vendor_id: z.string().optional(),
 }).merge(createFindParams())
 
-export const GetOrdersByEmailSchema = z.object({
-    email: z.string().email(),
-}).merge(createFindParams())
+export const GetOrdersByEmailSchema = createFindParams()
 
 export default defineMiddlewares({
     routes: [
@@ -85,6 +83,7 @@ export default defineMiddlewares({
                         isList: true,
                     }
                 ),
+                affTokenAuth
             ],
         },
         {
