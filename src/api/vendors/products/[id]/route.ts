@@ -7,13 +7,13 @@ import {
   ContainerRegistrationKeys,
   MedusaError,
 } from "@medusajs/framework/utils"
-import { updateProductsWorkflow } from "@medusajs/medusa/core-flows"
+import {
+  deleteProductsWorkflow,
+  updateProductsWorkflow,
+} from "@medusajs/medusa/core-flows"
 import VendorProductLink from "../../../../links/vendor-product"
 
-export const POST = async (
-  req: AuthenticatedMedusaRequest<HttpTypes.AdminUpdateProduct>,
-  res: MedusaResponse
-) => {
+const getVendorOwnedProduct = async (req: AuthenticatedMedusaRequest) => {
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
   const { data: vendorAdmins } = await query.graph({
@@ -48,6 +48,15 @@ export const POST = async (
     )
   }
 
+  return { query, vendorId }
+}
+
+export const POST = async (
+  req: AuthenticatedMedusaRequest<HttpTypes.AdminUpdateProduct>,
+  res: MedusaResponse
+) => {
+  const { query } = await getVendorOwnedProduct(req)
+
   const { additional_data, ...update } = (req.validatedBody ?? {}) as any
 
   const { result } = await updateProductsWorkflow(req.scope).run({
@@ -79,3 +88,21 @@ export const POST = async (
   })
 }
 
+export const DELETE = async (
+  req: AuthenticatedMedusaRequest,
+  res: MedusaResponse
+) => {
+  await getVendorOwnedProduct(req)
+
+  await deleteProductsWorkflow(req.scope).run({
+    input: {
+      ids: [req.params.id],
+    },
+  })
+
+  res.status(200).json({
+    id: req.params.id,
+    object: "product",
+    deleted: true,
+  })
+}

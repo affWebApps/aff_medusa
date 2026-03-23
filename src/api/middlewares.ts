@@ -20,6 +20,10 @@ export const GetVendorsSchema = z.object({
     vendor_id: z.string().optional(),
 }).merge(createFindParams())
 
+export const GetOrdersByEmailSchema = z.object({
+    email: z.string().email(),
+}).merge(createFindParams())
+
 export default defineMiddlewares({
     routes: [
         // Custom token auth from external BE (x-aff-token)
@@ -60,6 +64,30 @@ export default defineMiddlewares({
             ],
         },
         {
+            matcher: "/store/orders-by-email",
+            method: "GET",
+            middlewares: [
+                validateAndTransformQuery(
+                    GetOrdersByEmailSchema,
+                    {
+                        defaults: [
+                            "id",
+                            "display_id",
+                            "email",
+                            "status",
+                            "payment_status",
+                            "fulfillment_status",
+                            "currency_code",
+                            "total",
+                            "created_at",
+                            "items.*",
+                        ],
+                        isList: true,
+                    }
+                ),
+            ],
+        },
+        {
             matcher: "/vendors/products",
             method: ["POST"],
             middlewares: [
@@ -73,6 +101,13 @@ export default defineMiddlewares({
             middlewares: [
                 affTokenAuth,
                 validateAndTransformBody(AdminUpdateProduct),
+            ]
+        },
+        {
+            matcher: "/vendors/products/:id",
+            method: ["DELETE"],
+            middlewares: [
+                affTokenAuth,
             ]
         },
         {
