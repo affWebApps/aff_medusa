@@ -21,6 +21,7 @@ export const GetVendorsSchema = z.object({
 }).merge(createFindParams())
 
 export const GetOrdersByEmailSchema = createFindParams()
+export const GetOrderTransactionsSchema = createFindParams()
 
 export default defineMiddlewares({
     routes: [
@@ -84,6 +85,31 @@ export default defineMiddlewares({
                     }
                 ),
                 affTokenAuth
+            ],
+        },
+        {
+            matcher: "/store/order-transactions",
+            method: "GET",
+            middlewares: [
+                validateAndTransformQuery(
+                    GetOrderTransactionsSchema,
+                    {
+                        defaults: [
+                            "id",
+                            "order_id",
+                            "version",
+                            "amount",
+                            "currency_code",
+                            "reference",
+                            "reference_id",
+                            "metadata",
+                            "created_at",
+                            "updated_at",
+                        ],
+                        isList: true,
+                    }
+                ),
+                affTokenAuth,
             ],
         },
         {
