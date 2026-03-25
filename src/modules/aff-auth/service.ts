@@ -74,7 +74,6 @@ export default class MyAuthProviderService extends AbstractAuthModuleProvider {
             this.logger_?.error?.("BACKEND_URL env var is missing")
             return null
         }
-        console.log("auth token is", data.headers?.['x-aff-token'])
         const response = await fetch(`${beUrl}/users/me`, {
             headers: {
                 Authorization: `Bearer ${data.headers?.['x-aff-token'] ?? ""}`,

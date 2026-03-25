@@ -3,7 +3,6 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 
 export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-  console.log("auth context", (req as any).auth_context)
   const authContext = (req as any).auth_context
   const email =
     authContext?.email ||

@@ -24,8 +24,6 @@ export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
       },
     })
 
-    console.log("payment collections found for reference", { reference, paymentCollections })
-
     const cartId = paymentCollections?.[0]?.cart?.id
     const sessionId = paymentCollections?.[0]?.payment_sessions?.[0]?.id
 

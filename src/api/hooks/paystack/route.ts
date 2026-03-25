@@ -82,8 +82,6 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
 
       const cartId = paymentCollections[0]?.cart?.id
 
-      console.log("cart id is ....", cartId)
-
       let cartCompleted = false
       if (cartId) {
         try {

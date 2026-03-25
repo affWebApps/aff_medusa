@@ -28,7 +28,6 @@ export const POST = async (
     res: MedusaResponse
 ) => {
     // If a vendor is already linked to this auth context, prevent duplicate creation
-    console.log(req.auth_context?.user_metadata?.vendor_id)
     if (req.auth_context?.user_metadata?.vendor_id) {
         throw new MedusaError(
             MedusaError.Types.INVALID_DATA,
@@ -38,7 +37,6 @@ export const POST = async (
 
     const vendorData = req.validatedBody
     const authIdentityId = req.auth_context?.auth_identity_id
-    console.log(authIdentityId, "is your auth identity")
 
     if (!authIdentityId) {
         throw new MedusaError(
