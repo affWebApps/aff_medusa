@@ -22,6 +22,7 @@ export const GetVendorsSchema = z.object({
 
 export const GetOrdersByEmailSchema = createFindParams()
 export const GetOrderTransactionsSchema = createFindParams()
+export const GetVendorOrdersSchema = createFindParams()
 
 export default defineMiddlewares({
     routes: [
@@ -110,6 +111,31 @@ export default defineMiddlewares({
                     }
                 ),
                 affTokenAuth,
+            ],
+        },
+        {
+            matcher: "/vendors/orders",
+            method: ["GET"],
+            middlewares: [
+                validateAndTransformQuery(
+                    GetVendorOrdersSchema,
+                    {
+                        defaults: [
+                            "id",
+                            "display_id",
+                            "email",
+                            "status",
+                            "payment_status",
+                            "fulfillment_status",
+                            "currency_code",
+                            "total",
+                            "created_at",
+                            "items.*",
+                            "shipping_address.*",
+                        ],
+                        isList: true,
+                    }
+                ),
             ],
         },
         {
