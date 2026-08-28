@@ -1,8 +1,8 @@
-import { AuthenticatedMedusaRequest, MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import { getOrdersListWorkflow } from "@medusajs/core-flows"
+import type { OrderDTO } from "@medusajs/framework/types"
 
 export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) => {
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
   const authContext = (req as any).auth_context
   const email =
     authContext?.email ||
@@ -14,25 +14,26 @@ export const GET = async (req: AuthenticatedMedusaRequest, res: MedusaResponse) 
     })
   }
 
-  const {
-    data: orders,
-    metadata: { take, skip, count } = {},
-  } = await query.graph({
-    entity: "order",
-    fields: req.queryConfig.fields,
-    filters: {
-      email,
-    },
-    pagination: {
-      take: req.queryConfig.pagination.take,
-      skip: req.queryConfig.pagination.skip,
+  const workflow = getOrdersListWorkflow(req.scope)
+  const { result } = await workflow.run({
+    input: {
+      fields: req.queryConfig.fields,
+      variables: {
+        filters: { email },
+        ...req.queryConfig.pagination,
+      },
     },
   })
 
+  const { rows: orders, metadata } = result as {
+    rows: OrderDTO[]
+    metadata: { count: number; take: number; skip: number }
+  }
+
   res.json({
     orders,
-    count,
-    take,
-    skip,
+    count: metadata.count,
+    take: metadata.take,
+    skip: metadata.skip,
   })
 }
