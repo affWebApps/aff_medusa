@@ -9,6 +9,12 @@ import { PostVendorCreateSchema } from "./vendors/route"
 import { z } from "@medusajs/framework/zod"
 import { AdminUpdateProduct } from "@medusajs/medusa/api/admin/products/validators"
 import { AdminCreateProductWithReqQty } from "./vendors/products/validators"
+import {
+    VendorCancelFulfillment,
+    VendorCreateFulfillment,
+    VendorCreateShipment,
+} from "./vendors/orders/validators"
+import { VENDOR_ORDER_DETAIL_FIELDS } from "./vendors/orders/utils"
 import type { MedusaNextFunction, MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import createVendorWorkflow from "../workflows/marketplace/create-vendor"
 import { logger } from "@medusajs/framework/logger"
@@ -23,6 +29,7 @@ export const GetVendorsSchema = z.object({
 export const GetOrdersByEmailSchema = createFindParams()
 export const GetOrderTransactionsSchema = createFindParams()
 export const GetVendorOrdersSchema = createFindParams()
+export const GetVendorOrderSchema = createFindParams()
 
 export default defineMiddlewares({
     routes: [
@@ -117,6 +124,7 @@ export default defineMiddlewares({
             matcher: "/vendors/orders",
             method: ["GET"],
             middlewares: [
+                affTokenAuth,
                 validateAndTransformQuery(
                     GetVendorOrdersSchema,
                     {
@@ -136,6 +144,51 @@ export default defineMiddlewares({
                         isList: true,
                     }
                 ),
+            ],
+        },
+        {
+            matcher: "/vendors/orders/:id",
+            method: ["GET"],
+            middlewares: [
+                affTokenAuth,
+                validateAndTransformQuery(
+                    GetVendorOrderSchema,
+                    {
+                        defaults: VENDOR_ORDER_DETAIL_FIELDS,
+                        isList: false,
+                    }
+                ),
+            ],
+        },
+        {
+            matcher: "/vendors/orders/:id/fulfillments",
+            method: ["POST"],
+            middlewares: [
+                affTokenAuth,
+                validateAndTransformBody(VendorCreateFulfillment),
+            ],
+        },
+        {
+            matcher: "/vendors/orders/:id/fulfillments/:fulfillment_id/shipments",
+            method: ["POST"],
+            middlewares: [
+                affTokenAuth,
+                validateAndTransformBody(VendorCreateShipment),
+            ],
+        },
+        {
+            matcher: "/vendors/orders/:id/fulfillments/:fulfillment_id/cancel",
+            method: ["POST"],
+            middlewares: [
+                affTokenAuth,
+                validateAndTransformBody(VendorCancelFulfillment),
+            ],
+        },
+        {
+            matcher: "/vendors/orders/:id/fulfillments/:fulfillment_id/mark-as-delivered",
+            method: ["POST"],
+            middlewares: [
+                affTokenAuth,
             ],
         },
         {
@@ -202,6 +255,8 @@ async function affTokenAuth(
     const beUrl = process.env.BACKEND_URL
     const beApiKey = process.env.BACKEND_API_KEY
 
+    console.log("x-aff-token header received:", token)
+
     if (!token || !beUrl) {
         return next()
     }
@@ -221,6 +276,7 @@ async function affTokenAuth(
 
         const user = await response.json()
         // Prefer vendor_id from BE, fall back to user identifiers
+        console.log("user vendor id from BE is", user.vendor_id)
         const actorId = user.vendor_id || user.id || user.user_id || user.email
 
         // Try to find an existing auth_identity via provider_identity entity_id = user.id
@@ -255,6 +311,7 @@ async function affTokenAuth(
             email: user.email,
             app_metadata: user,
         }
+        console.log("customer and vendor ids are", reqAny.auth_context?.customer_id, reqAny.auth_context?.vendor_id)
     } catch (err) {
         // ignore errors and fall through
         logger.log(err)

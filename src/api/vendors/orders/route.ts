@@ -9,6 +9,8 @@ export const GET = async (
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
 ) => {
+  // console.log("auth_context on GET /vendors/orders:", req.auth_context)
+
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
   const { data: [vendorAdmin] } = await query.graph({

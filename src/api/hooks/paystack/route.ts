@@ -1,7 +1,7 @@
 import { createHmac } from "crypto"
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
-import { completeCartWorkflow } from "@medusajs/medusa/core-flows"
+import createVendorOrdersWorkflow from "../../../workflows/marketplace/create-vendor-orders"
 
 
 // Paystack webhook: set the endpoint URL in your Paystack dashboard to /hooks/paystack
@@ -85,13 +85,16 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
       let cartCompleted = false
       if (cartId) {
         try {
-          const { result } = await completeCartWorkflow(req.scope).run({
+          await createVendorOrdersWorkflow(req.scope).run({
             input: {
-              id: cartId,
+              cart_id: cartId,
             },
           })
-        } catch (err) {
-          logger.error("Error completing cart after paystack webhook", { err, cartId } as any)
+          cartCompleted = true
+        } catch (err: any) {
+          logger.error(
+            `Error completing cart after paystack webhook (cartId=${cartId}): ${err?.message}\n${err?.stack}`
+          )
         }
       }
 
